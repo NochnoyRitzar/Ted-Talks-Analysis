@@ -154,11 +154,42 @@ class WebScrappy:
         # get topic list and iterate over it to get video topics
         talk_topics_list = page_right_side.find('ul')
         topics = [li.a.get_text(strip=True) for li in talk_topics_list.contents]
+        # iterate over 'related videos' and extract information about them
+        related_videos_section = page_right_side.find('div', attrs={'id': 'tabs--1--panel--0'}).select('a')
+        related_videos = [WebScrappy.scrape_related_video_info(video) for video in related_videos_section]
 
         return {'views': views,
                 'like_count': like_count,
                 'summary': summary,
-                'topics': topics}
+                'topics': topics,
+                'related_videos': related_videos}
+
+    @staticmethod
+    def scrape_related_video_info(video):
+        """
+        Extract url, duration, views, date, title, speakers for related video
+
+        :param video: related video
+        :return: Information about related video
+        :rtype: dict
+        """
+        page_url = TED_URL + video['href']
+
+        video_info = video.div
+        duration = video_info.find('div', attrs={'class': 'text-xxs'}).get_text()
+        views_and_date, title, speakers = [
+            tag.get_text(strip=True) for tag in video_info.find('div', attrs={'class': 'ml-4'}).contents
+        ]
+        views, date = views_and_date.split(' views | ')
+
+        return {
+            'page_url': page_url,
+            'duration': duration,
+            'views': views,
+            'date': date,
+            'title': title,
+            'speakers': speakers
+        }
 
     def start_scraping(self):
         print('Starting to web scrape')
