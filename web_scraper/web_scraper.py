@@ -123,7 +123,6 @@ class WebScrappy:
         :return: Return page DOM after button click
         """
         self.driver.get(talk_page_url)
-        time.sleep(2)
         # check if no such element exists in DOM
         try:
             self.driver.find_element(By.CSS_SELECTOR, 'button > span ~ i').click()
@@ -154,18 +153,23 @@ class WebScrappy:
         like_count = talk_stats.find('span').get_text(strip=True)[1:-1]
         # get all talk topics
         talk_topics_list = talk_topics.find('ul')
+        # get talk summary
+        talk_summary = talk_topics.find(attrs={'class': 'text-sm mb-6'}).get_text(strip=True)
+
         topics = [tag.a.get_text(strip=True) for tag in talk_topics_list.contents] if talk_topics_list else []
 
         return {'views': views,
                 'like_count': like_count,
+                'summary': talk_summary,
                 'tags': topics}
 
     def start_scraping(self):
         print('Starting to web scrape')
         # iterate over all catalog pages
-        for page_number in range(2, self.last_page + 1):
+        for page_number in range(1, self.last_page + 1):
             catalog_page = WebScrappy.scrape_catalog_page(page_number)
             catalog_page_talks_info = self.get_catalog_talks_info(catalog_page)
+            print(f'Finished scraping {page_number}/{self.last_page} pages')
             print(catalog_page_talks_info)
             # for testing to stop iterating through pages
             break
