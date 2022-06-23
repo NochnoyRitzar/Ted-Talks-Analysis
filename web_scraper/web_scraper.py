@@ -14,7 +14,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 # speed up program by filtering what to parse
 catalog_parse_only = SoupStrainer('div', id='browse-results')
-page_parse_only = SoupStrainer('div', class_='flex flex-col md:mb-4')
+page_parse_only = SoupStrainer('main', id='maincontent')
 
 
 class WebScrappy:
@@ -134,34 +134,31 @@ class WebScrappy:
     @staticmethod
     def get_talk_page_info(talk_page_content):
         """
-        Get views, likes count and tags from a talk's page
+        Get views, likes count, topics and related videos info from a talk's page
 
         :param talk_page_content:
         :return: Talk information from it's page on TED
         :rtype: dict
         """
 
-        # GET TALK INFO FOR FUNCTION AFTER SELENIUM DRIVER
         talk_page = BeautifulSoup(talk_page_content, 'lxml', parse_only=page_parse_only)
 
+        page_left_side = talk_page.find('div', attrs={'class': 'md:mb-4'})
         # find direct children of div element with class containing 'flex'
-        talk_stats, talk_topics, _ = talk_page.div.find_all(attrs={'class': 'flex'}, recursive=False)
-
-        # get talk views
+        talk_stats, talk_topics, _ = page_left_side.find_all(attrs={'class': 'flex'}, recursive=False)
         views = talk_stats.div.div.get_text(strip=True).split(' ')[0]
-        # get talk like count
         like_count = talk_stats.find('span').get_text(strip=True)[1:-1]
-        # get all talk topics
-        talk_topics_list = talk_topics.find('ul')
-        # get talk summary
-        talk_summary = talk_topics.find(attrs={'class': 'text-sm mb-6'}).get_text(strip=True)
+        summary = talk_topics.find(attrs={'class': 'text-sm mb-6'}).get_text(strip=True)
 
-        topics = [tag.a.get_text(strip=True) for tag in talk_topics_list.contents] if talk_topics_list else []
+        page_right_side = talk_page.find('aside')
+        # get topic list and iterate over it to get video topics
+        talk_topics_list = page_right_side.find('ul')
+        topics = [li.a.get_text(strip=True) for li in talk_topics_list.contents]
 
         return {'views': views,
                 'like_count': like_count,
-                'summary': talk_summary,
-                'tags': topics}
+                'summary': summary,
+                'topics': topics}
 
     def start_scraping(self):
         print('Starting to web scrape')
