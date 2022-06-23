@@ -154,7 +154,7 @@ class WebScrappy:
         page_right_side = talk_page.find('aside')
         # get topic list and iterate over it to get video topics
         talk_topics_list = page_right_side.find('ul')
-        topics = [li.a.get_text(strip=True) for li in talk_topics_list.contents]
+        topics = [li.a.get_text(strip=True) for li in talk_topics_list.contents] if talk_topics_list else []
         # iterate over 'related videos' and extract information about them
         related_videos_section = page_right_side.find('div', attrs={'id': 'tabs--1--panel--0'}).select('a')
         related_videos = [WebScrappy.scrape_related_video_info(video) for video in related_videos_section]
