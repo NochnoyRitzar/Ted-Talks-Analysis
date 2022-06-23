@@ -21,6 +21,7 @@ class WebScrappy:
 
     def __init__(self):
         try:
+            self.talk_count = 0
             # selenium web driver for dynamic scraping
             self.driver = WebScrappy.create_browser_driver()
             self.last_page = WebScrappy.get_pages_count()
@@ -97,17 +98,19 @@ class WebScrappy:
 
             # get talk duration and remove space in the beginning
             talk_duration = talk_image.a.span.contents[1].get_text(strip=True)
-            speaker = talk_info.h4.get_text()
+            speakers = talk_info.h4.get_text()
             title = talk_info.h4.find_next_sibling().a.get_text(strip=True)
             date_posted = talk_info.div.span.span.get_text(strip=True)
 
-            data.append({'title': title,
-                         'speaker': speaker,
+            data.append({'_id': self.talk_count,
+                         'title': title,
+                         'speakers': speakers,
                          'date': date_posted,
                          'duration': talk_duration,
                          'page_url': talk_page_url,
                          **talk_page_info})
 
+            self.talk_count += 1
             # SOMETHING LIKE AWAIT RESULT FROM ASYNC FUNC
             # AND APPEND DICTIONARY RESULT TO DATA
 
