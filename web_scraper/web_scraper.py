@@ -1,6 +1,7 @@
 import time
 
 from constants import TED_URL
+from db_connect import client
 
 import requests
 from bs4 import BeautifulSoup, SoupStrainer
@@ -10,11 +11,13 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
 # @TODO: add async requests for faster execution
-# @TODO: create Talk class to store talk related info
 
 # speed up program by filtering what to parse
 catalog_parse_only = SoupStrainer('div', id='browse-results')
 page_parse_only = SoupStrainer('main', id='maincontent')
+
+# connect to 'talks_info' collection in 'TEDTalks' db
+collection = client['TEDTalks']['talks_info']
 
 
 class WebScrappy:
@@ -111,11 +114,6 @@ class WebScrappy:
                          **talk_page_info})
 
             self.talk_count += 1
-            # SOMETHING LIKE AWAIT RESULT FROM ASYNC FUNC
-            # AND APPEND DICTIONARY RESULT TO DATA
-
-            # for testing to get only first talk in catalog
-            break
 
         return data
 
@@ -198,12 +196,15 @@ class WebScrappy:
         print('Starting to web scrape')
         # iterate over all catalog pages
         for page_number in range(1, self.last_page + 1):
+            print(f'Started scraping page {page_number}/{self.last_page}')
             catalog_page = WebScrappy.scrape_catalog_page(page_number)
             catalog_page_talks_info = self.get_catalog_talks_info(catalog_page)
-            print(f'Finished scraping {page_number}/{self.last_page} pages')
-            print(catalog_page_talks_info)
-            # for testing to stop iterating through pages
-            break
+            print(f'Finished scraping page {page_number}/{self.last_page}')
+            try:
+                collection.insert_many(catalog_page_talks_info)
+            except Exception as ex:
+                print(ex)
+        print('Finished scraping! :)')
 
 
 if __name__ == '__main__':
