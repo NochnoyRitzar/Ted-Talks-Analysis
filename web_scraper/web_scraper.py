@@ -155,8 +155,9 @@ class WebScrappy:
         page_left_side = page_right_side.previous_sibling
         # find direct children of div element with class containing 'flex'
         talk_stats, talk_summary, _ = page_left_side.contents[1].find_all(attrs={'class': 'flex'}, recursive=False)
-        # @TODO: add event scraping
-        views = talk_stats.div.div.get_text(strip=True).split(' ')[0].replace(',', '')
+        views_and_event = talk_stats.div.div.get_text(strip=True).split(' ')
+        event = views_and_event[-1]
+        views = views_and_event[0].replace(',', '')
         if not views.isdigit():
             views = None
         like_count = talk_stats.find('span').get_text(strip=True)[1:-1]
@@ -181,6 +182,7 @@ class WebScrappy:
             speakers = []
 
         return {'views': views,
+                'event': event,
                 'like_count': like_count,
                 'summary': summary,
                 'topics': topics,
