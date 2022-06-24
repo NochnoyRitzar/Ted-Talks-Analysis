@@ -156,8 +156,9 @@ class WebScrappy:
         # find direct children of div element with class containing 'flex'
         talk_stats, talk_summary, _ = page_left_side.contents[1].find_all(attrs={'class': 'flex'}, recursive=False)
         # @TODO: add event scraping
-        # @TODO: check if views count exists
-        views = talk_stats.div.div.get_text(strip=True).split(' ')[0]
+        views = talk_stats.div.div.get_text(strip=True).split(' ')[0].replace(',', '')
+        if not views.isdigit():
+            views = None
         like_count = talk_stats.find('span').get_text(strip=True)[1:-1]
         summary = talk_summary.find(attrs={'class': 'text-sm mb-6'}).get_text(strip=True)
         # Talks can have either speakers or educators
