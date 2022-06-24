@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
 # @TODO: add async requests for faster execution
+# @TODO: investigate cchardet library
 
 # speed up program by filtering what to parse
 catalog_parse_only = SoupStrainer('div', id='browse-results')
@@ -70,6 +71,7 @@ class WebScrappy:
 
     @staticmethod
     def scrape_catalog_page(page_number):
+        # @TODO: re-use request sessions
         response = requests.get(TED_URL + f'/talks?page={page_number}')
         catalog_page = BeautifulSoup(response.content, 'lxml', parse_only=catalog_parse_only)
 
@@ -101,13 +103,11 @@ class WebScrappy:
 
             # get talk duration and remove space in the beginning
             talk_duration = talk_image.a.span.contents[1].get_text(strip=True)
-            speakers = talk_info.h4.get_text()
             title = talk_info.h4.find_next_sibling().a.get_text(strip=True)
             date_posted = talk_info.div.span.span.get_text(strip=True)
 
             data.append({'_id': self.talk_count,
                          'title': title,
-                         'speakers': speakers,
                          'date': date_posted,
                          'duration': talk_duration,
                          'page_url': talk_page_url,
@@ -135,7 +135,7 @@ class WebScrappy:
     @staticmethod
     def get_talk_page_info(talk_page_content):
         """
-        Get views, likes count, topics and related videos info from a talk's page
+        Get views, likes count, topics, summary, related videos, speakers info from a talk's page
 
         :param talk_page_content:
         :return: Talk information from it's page on TED
@@ -143,13 +143,6 @@ class WebScrappy:
         """
 
         talk_page = BeautifulSoup(talk_page_content, 'lxml', parse_only=page_parse_only)
-
-        page_left_side = talk_page.find('div', attrs={'class': 'md:mb-4'})
-        # find direct children of div element with class containing 'flex'
-        talk_stats, talk_topics, _ = page_left_side.find_all(attrs={'class': 'flex'}, recursive=False)
-        views = talk_stats.div.div.get_text(strip=True).split(' ')[0]
-        like_count = talk_stats.find('span').get_text(strip=True)[1:-1]
-        summary = talk_topics.find(attrs={'class': 'text-sm mb-6'}).get_text(strip=True)
 
         page_right_side = talk_page.find('aside')
         # get topic list and iterate over it to get video topics
@@ -159,10 +152,38 @@ class WebScrappy:
         related_videos_section = page_right_side.find('div', attrs={'id': 'tabs--1--panel--0'}).select('a')
         related_videos = [WebScrappy.scrape_related_video_info(video) for video in related_videos_section]
 
+        page_left_side = page_right_side.previous_sibling
+        # find direct children of div element with class containing 'flex'
+        talk_stats, talk_summary, _ = page_left_side.contents[1].find_all(attrs={'class': 'flex'}, recursive=False)
+        # @TODO: add event scraping
+        # @TODO: check if views count exists
+        views = talk_stats.div.div.get_text(strip=True).split(' ')[0]
+        like_count = talk_stats.find('span').get_text(strip=True)[1:-1]
+        summary = talk_summary.find(attrs={'class': 'text-sm mb-6'}).get_text(strip=True)
+        # Talks can have either speakers or educators
+        # Scrape info from section (speakers or educators) that exists in a page
+        # If both sections don't exist set speakers list to empty
+        speakers_section = page_left_side.select('div.mr-2.w-14 + div')
+        educators_section = page_left_side.find_all('div', attrs={'class': 'mt-3 mb-6'})
+        if speakers_section:
+            speakers_section = [div.contents for div in speakers_section]
+            speakers = [
+                {'name': div[0].get_text(),
+                 'occupation': div[1].get_text()} for div in speakers_section
+            ]
+        elif educators_section:
+            speakers = [
+                {'name': div.previous_sibling.find('div', attrs={'class': 'text-base'}).get_text(),
+                 'occupation': 'Educator'} for div in educators_section
+            ]
+        else:
+            speakers = []
+
         return {'views': views,
                 'like_count': like_count,
                 'summary': summary,
                 'topics': topics,
+                'speakers': speakers,
                 'related_videos': related_videos}
 
     @staticmethod
@@ -210,4 +231,3 @@ class WebScrappy:
 if __name__ == '__main__':
     # start web scraping
     scrappy = WebScrappy()
-
