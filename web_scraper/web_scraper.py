@@ -1,17 +1,16 @@
-import time
+import requests
+# import library for faster scraping
+import cchardet
+from bs4 import BeautifulSoup, SoupStrainer
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service
 
 from constants import TED_URL
 from db_connect import client
 
-import requests
-from bs4 import BeautifulSoup, SoupStrainer
-from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
-
 # @TODO: add async requests for faster execution
-# @TODO: investigate cchardet library
 
 # speed up program by filtering what to parse
 catalog_parse_only = SoupStrainer('div', id='browse-results')
@@ -19,6 +18,7 @@ page_parse_only = SoupStrainer('main', id='maincontent')
 
 # connect to 'talks_info' collection in 'TEDTalks' db
 collection = client['TEDTalks']['talks_info']
+session = requests.Session()
 
 
 class WebScrappy:
@@ -71,8 +71,7 @@ class WebScrappy:
 
     @staticmethod
     def scrape_catalog_page(page_number):
-        # @TODO: re-use request sessions
-        response = requests.get(TED_URL + f'/talks?page={page_number}')
+        response = session.get(TED_URL + f'/talks?page={page_number}')
         catalog_page = BeautifulSoup(response.content, 'lxml', parse_only=catalog_parse_only)
 
         return catalog_page
