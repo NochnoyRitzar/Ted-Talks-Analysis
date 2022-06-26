@@ -47,6 +47,11 @@ class WebScrappy:
         options = webdriver.FirefoxOptions()
         options.add_argument('--headless')
         options.add_argument("--disable-extensions")
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-application-cache')
+        options.add_argument('--disable-gpu')
+        options.add_argument("--disable-dev-shm-usage")
 
         driver = webdriver.Firefox(service=Service(executable_path='geckodriver.exe'), options=options)
         print('Finished creation')
@@ -71,7 +76,7 @@ class WebScrappy:
 
     @staticmethod
     def scrape_catalog_page(page_number):
-        response = session.get(TED_URL + f'/talks?page={page_number}')
+        response = session.get(TED_URL + f'/talks?page={page_number}&sort=oldest')
         catalog_page = BeautifulSoup(response.content, 'lxml', parse_only=catalog_parse_only)
 
         return catalog_page
@@ -157,8 +162,7 @@ class WebScrappy:
         views_and_event = talk_stats.div.div.get_text(strip=True).split(' ')
         event = views_and_event[-1]
         views = views_and_event[0].replace(',', '')
-        if not views.isdigit():
-            views = None
+        views = None if not views.isdigit() else int(views)
         like_count = talk_stats.find('span').get_text(strip=True)[1:-1]
         summary = talk_summary.find(attrs={'class': 'text-sm mb-6'}).get_text(strip=True)
         # Talks can have either speakers or educators
