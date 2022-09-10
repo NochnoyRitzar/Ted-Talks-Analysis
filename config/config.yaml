@@ -1,0 +1,26 @@
+rows_to_drop:
+  - 2401
+  - 5614
+  - 4822
+  - 3077
+  - 3392
+  - 3657
+  - 3810
+  - 4090
+  - 4967
+  - 5073
+  - 5141
+  - 5169
+  - 5258
+  - 5271
+cols_to_drop:
+  - _id
+  - recorded_date
+  - page_url
+  - youtube_video_code
+  - related_videos
+  - transcript
+  - speakers
+cols_with_list_data:
+  - topics
+  - subtitle_languages
