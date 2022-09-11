@@ -1,5 +1,8 @@
-import numpy as np
 from ast import literal_eval
+
+import numpy as np
+import pandas as pd
+
 from utilities import load_config
 
 np.random.seed(42)
@@ -87,9 +90,21 @@ def clean_list_data_columns(df):
     return df_list_data
 
 
+def clean_published_date(df):
+    """
+    Convert datetime values to date
+    :param df: original Dataframe
+    :return: Series with clean 'published_date' values
+    """
+    series = df['published_date'].copy()
+    series = pd.to_datetime(series).dt.date
+    return series
+
+
 def clean_data(df):
     """
-    Group data cleaning functions. \n
+    Contains all functions that are related to cleaning raw data.
+    :param df: Dataframe with raw data
     :return: clean Dataframe
     """
     df = drop_columns(df)
@@ -97,6 +112,9 @@ def clean_data(df):
     df['event'] = clean_event_column(df)
     df['likes'] = df['likes'].apply(clean_likes_column)
     df.loc[:, config.get('cols_with_list_data')] = clean_list_data_columns(df)
-    print('Finished cleaning raw data')
-    return df
+    df['published_date'] = clean_published_date(df)
+    df.to_csv('data/intermediate/clean_data.csv')
 
+    print('Finished cleaning raw data. Saved intermediate result to corresponding folder')
+
+    return df
