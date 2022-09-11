@@ -113,7 +113,7 @@ def clean_data(df):
     df['likes'] = df['likes'].apply(clean_likes_column)
     df.loc[:, config.get('cols_with_list_data')] = clean_list_data_columns(df)
     df['published_date'] = clean_published_date(df)
-    df.to_csv('data/intermediate/clean_data.csv')
+    df.to_csv('data/intermediate/clean_data.csv', index=False)
 
     print('Finished cleaning raw data. Saved intermediate result to corresponding folder')
 
