@@ -16,6 +16,11 @@ def drop_rows(df):
     :return: Dataframe without removed rows
     """
     df = df.drop(config.get('rows_to_drop'), axis=0)
+    df = df.drop(df.loc[df['views'] <= 20000].index, axis=0)
+    df = df.drop(df.loc[df['duration'] > 4200].index, axis=0)
+    # drop talks with less than 3 topics
+    num_topics_series = df['topics'].apply(literal_eval).apply(lambda row: len(row))
+    df = df.drop(num_topics_series.loc[num_topics_series < 3].index)
     return df
 
 
