@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from datetime import datetime
 from ast import literal_eval
 from sklearn.model_selection import train_test_split
 from category_encoders import BinaryEncoder
@@ -162,12 +163,38 @@ def encode_topics_column(df) -> pd.DataFrame:
 
 
 def encode_event_column(df):
+    """
+    Use binary encoding for 'event' column. \n
+    :param df: original Dataframe
+    :return: Dataframe with 'event' column encoded
+    """
     encoder = BinaryEncoder(cols=['event'], return_df=True)
     df = encoder.fit_transform(df)
+    return df
+
+
+def create_new_features(df):
+    """
+    Create new features by transforming existing features. \n
+    Drop used features after transforming. \n
+    :param df: original Dataframe
+    :return: Dataframe with new features
+    """
+    df['title_length'] = df['title'].apply(lambda title: len(title))
+    df['summary_length'] = df['summary'].apply(lambda summary: len(summary))
+    df['num_subtitles'] = df['subtitle_languages'].apply(lambda array: len(array))
+    # days passed since publication to the time when dataset was created
+    df['days_passed'] = (config.get('dataset_creation_date') - pd.to_datetime(df['published_date']).dt.date).dt.days
+    df['log_duration'] = df['duration'].apply(np.log)
+    df['log_likes'] = df['likes'].apply(np.log)
+
+    df = df.drop(columns=['title', 'summary', 'subtitle_languages', 'published_date', 'duration', 'likes'])
     return df
 
 
 def feature_engineering(df):
     df = encode_topics_column(df)
     df = encode_event_column(df)
+    df = create_new_features(df)
+    print('Finished feature engineering.')
     return df
