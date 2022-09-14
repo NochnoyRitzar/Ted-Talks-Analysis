@@ -192,9 +192,24 @@ def create_new_features(df):
     return df
 
 
+def split_data(df):
+    """
+    Split data into train and testing datasets. \n
+    :param df: original Dataframe
+    :return: training and testing dataset
+    """
+    X = df.drop(columns=['views'])
+    y = df['views']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+
+    return X_train, y_train, X_test, y_test
+
+
+# @TODO: Try using synthetic data to increase dataset size
 def feature_engineering(df):
     df = encode_topics_column(df)
     df = encode_event_column(df)
     df = create_new_features(df)
+    X_train, y_train, X_test, y_test = split_data(df)
     print('Finished feature engineering.')
     return df
