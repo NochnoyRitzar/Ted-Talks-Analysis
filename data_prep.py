@@ -54,6 +54,8 @@ def clean_event_column(df) -> pd.Series:
     df_subset.loc[mask] = df_subset.loc[mask].apply(lambda event_name: event_name[:-5])
     mask = (df_subset.str.contains(r"NY\d{4}", regex=True))
     df_subset.loc[mask] = df_subset.loc[mask].apply(lambda event_name: event_name[:-4])
+    mask = (df_subset.str.contains(r"Salon", na=False, regex=True))
+    df_subset.loc[mask] = 'TedSalon'
 
     # change event name to 'Ted-Other' for each event that has less than 20 talks
     index_list = df_subset.groupby(df_subset).filter(lambda x: len(x) < 20).index
