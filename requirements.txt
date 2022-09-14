@@ -1,2 +1,4 @@
 pandas==1.4.4
 PyYAML==6.0
+category-encoders==2.5.0
+scikit-learn==1.1.2

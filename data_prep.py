@@ -1,7 +1,10 @@
-from ast import literal_eval
-
 import numpy as np
 import pandas as pd
+
+from ast import literal_eval
+from sklearn.model_selection import train_test_split
+from category_encoders import BinaryEncoder
+
 
 from utilities import load_config
 
@@ -9,7 +12,7 @@ np.random.seed(42)
 config = load_config()
 
 
-def drop_rows(df):
+def drop_rows(df) -> pd.DataFrame:
     """
     Drop rows from Dataframe
     :param df: Dataframe
@@ -24,7 +27,7 @@ def drop_rows(df):
     return df
 
 
-def drop_columns(df):
+def drop_columns(df) -> pd.DataFrame:
     """
     Drop unnecessary columns from Dataframe
     :param df: Dataframe
@@ -34,7 +37,7 @@ def drop_columns(df):
     return df
 
 
-def clean_event_column(df):
+def clean_event_column(df) -> pd.Series:
     """
     Remove date from events and group with similar. \n
     Change name to 'TED-Other' for events with low talk count
@@ -59,7 +62,7 @@ def clean_event_column(df):
     return df_subset
 
 
-def clean_likes_column(num):
+def clean_likes_column(num) -> int:
     """
     Returns integer number from string
     :param num: number in string format
@@ -79,7 +82,7 @@ def clean_likes_column(num):
     return int(num)
 
 
-def clean_list_data_columns(df):
+def clean_list_data_columns(df) -> pd.DataFrame:
     """
     Convert string values to python objects(dict and list), unpack dictionaries and group into list of topics \n
     :param df: original Dataframe
@@ -95,7 +98,7 @@ def clean_list_data_columns(df):
     return df_list_data
 
 
-def clean_published_date(df):
+def clean_published_date(df) -> pd.Series:
     """
     Convert datetime values to date
     :param df: original Dataframe
@@ -106,7 +109,7 @@ def clean_published_date(df):
     return series
 
 
-def clean_data(df):
+def clean_data(df) -> pd.DataFrame:
     """
     Contains all functions that are related to cleaning raw data.
     :param df: Dataframe with raw data
@@ -122,4 +125,38 @@ def clean_data(df):
 
     print('Finished cleaning raw data. Saved intermediate result to corresponding folder')
 
+    return df
+
+
+def encode_topics_column(df) -> pd.DataFrame:
+    """
+    Create a column for each of 3 first topics in 'topics' column. \n
+    Fit encoder on all unique values to avoid errors if unknown values are introduced. \n
+    Encode 3 topic columns and concatenate to original Dataframe \n
+    :param df: original Dataframe
+    :return: Dataframe with encoded columns
+    """
+    topics_series = df['topics'].explode().unique()
+    # create a dataframe with 3 same columns
+    df_topics = pd.DataFrame(topics_series, columns=['topic_1'])
+    df_topics['topic_2'] = df_topics['topic_1']
+    df_topics['topic_3'] = df_topics['topic_1']
+
+    # separate first 3 topics into columns
+    for topic_num in range(0, 3):
+        df[f'topic_{topic_num + 1}'] = df['topics'].apply(lambda array: array[topic_num])
+
+    encoder = BinaryEncoder(cols=['topic_1', 'topic_2', 'topic_3'], return_df=True)
+    # fit on df_topics to include all topics into encoder mapping
+    encoder.fit(df_topics)
+    df_topics = encoder.transform(df.loc[:, 'topic_1':'topic_3'])
+
+    df = df.drop(columns=['topics', 'topic_1', 'topic_2', 'topic_3'])
+    df = pd.concat([df, df_topics], axis=1)
+
+    return df
+
+
+def feature_engineering(df):
+    df = encode_topics_column(df)
     return df
