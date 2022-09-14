@@ -60,6 +60,8 @@ def clean_event_column(df) -> pd.Series:
     # change event name to 'Ted-Other' for each event that has less than 20 talks
     index_list = df_subset.groupby(df_subset).filter(lambda x: len(x) < 20).index
     df_subset.loc[index_list] = 'TED-Other'
+    # for events that are very old
+    df_subset.loc[(df_subset == 'EG') | (df_subset == 'TEDIndia')] = 'TED-Other'
 
     return df_subset
 
@@ -159,6 +161,13 @@ def encode_topics_column(df) -> pd.DataFrame:
     return df
 
 
+def encode_event_column(df):
+    encoder = BinaryEncoder(cols=['event'], return_df=True)
+    df = encoder.fit_transform(df)
+    return df
+
+
 def feature_engineering(df):
     df = encode_topics_column(df)
+    df = encode_event_column(df)
     return df
