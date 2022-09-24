@@ -5,6 +5,7 @@ from datetime import datetime
 from ast import literal_eval
 from sklearn.model_selection import train_test_split
 from category_encoders import BinaryEncoder
+from sklearn.preprocessing import MinMaxScaler
 
 
 from utilities import load_config
@@ -205,11 +206,22 @@ def split_data(df):
     return X_train, y_train, X_test, y_test
 
 
+def scale_numerical_data(X_train, X_test):
+    minmax_scaler = MinMaxScaler()
+    # fit_transform on train data
+    X_train[config.get('unscaled_num_columns')] = minmax_scaler.fit_transform(X_train[config.get('unscaled_num_columns')])
+    # ONLY transform on test data!!!
+    X_test[config.get('unscaled_num_columns')] = minmax_scaler.transform(X_test[config.get('unscaled_num_columns')])
+
+    return X_train, X_test
+
+
 # @TODO: Try using synthetic data to increase dataset size
 def feature_engineering(df):
     df = encode_topics_column(df)
     df = encode_event_column(df)
     df = create_new_features(df)
     X_train, y_train, X_test, y_test = split_data(df)
+    X_train, X_test = scale_numerical_data(X_train, X_test)
     print('Finished feature engineering.')
     return df

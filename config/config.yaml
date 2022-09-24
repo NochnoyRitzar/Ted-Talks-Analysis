@@ -25,3 +25,10 @@ cols_with_list_data:
   - topics
   - subtitle_languages
 dataset_creation_date: 2022-09-01
+unscaled_num_columns:
+  - title_length
+  - summary_length
+  - num_subtitles
+  - days_passed
+  - log_duration
+  - log_likes
